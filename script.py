@@ -1,8 +1,8 @@
-import os
+from collections.abc import Generator
 from argparse import ArgumentParser, ArgumentTypeError
 from datetime import datetime
 from enum import Enum
-from glob import glob
+from pathlib import Path
 from typing import Final
 
 LOG_DATE_FMT: Final [str] = "%d/%m/%Y:%H:%M:%S +0000"
@@ -53,7 +53,8 @@ def filter_timestamp_between(log_entries: list[LogEntry], initial_ts: datetime, 
 
 
 class FilterArgs():
-    logs_path: str
+    logs_path: Path
+    single_file: bool
     log_level: list[str]
     initial_timestamp: datetime
     final_timestamp: datetime
@@ -63,6 +64,13 @@ class FilterArgs():
 
 
 def filter_parser() -> ArgumentParser:
+    def cast_path(raw_path: str) -> Path:
+        path = Path(raw_path)
+        if path.exists():
+            return path
+
+        raise ArgumentTypeError(f"Path {raw_path} wasn't found. It doesn't exist or you may need to grant read permissions to directory/file")
+
     def cast_date(raw_date: str) -> datetime:
         try:
             return datetime.strptime(raw_date, DATE_FMT)
@@ -71,7 +79,14 @@ def filter_parser() -> ArgumentParser:
 
     parser = ArgumentParser(prog="log_filter")
 
-    parser.add_argument("logs_path", help="Path where the log files are located")
+    parser.add_argument("logs_path", type=cast_path, help="Path where the logs are located")
+    parser.add_argument(
+        "--single_file",
+        "-f",
+        action="store_true",
+        dest="single_file",
+        help="Use a single file (instead of a directory) to load the logs",
+    )
     parser.add_argument(
         "--level",
         action="append",
@@ -111,12 +126,23 @@ class LogLevel(Enum):
         return [cls.DEBUG.value, cls.INFO.value, cls.WARNING.value, cls.ERROR.value]
 
 
+def valid_file(path: Path) -> bool:
+    if path.is_file():
+        return True
+
+    print("Please provide a valid file path.")
+    exit(0)
+
+
 if __name__ == "__main__":
     parser: ArgumentParser = filter_parser()
     filter_args: FilterArgs = parser.parse_args(namespace=FilterArgs())
 
-    logs_file_pattern: str = os.path.join(filter_args.logs_path, "*.log")
-    log_files: list[str] = glob(logs_file_pattern)
+    log_files: tuple[Path] | Generator[Path] = []
+    if filter_args.single_file and valid_file(filter_args.logs_path):
+        log_files = (filter_args.logs_path,)
+    else:
+        log_files = filter_args.logs_path.glob("*.log")
     
     logs: list[LogEntry] = []
     for file in log_files:
