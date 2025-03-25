@@ -1,0 +1,9 @@
+[project]
+name="log_filter"
+version="0.1.0"
+
+[project.scripts]
+log-filter = "log_filter.filter:main"
+
+[tool.setuptools]
+packages = ["log_filter"]
