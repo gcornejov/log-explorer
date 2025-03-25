@@ -1,8 +1,8 @@
 import os
-from argparse import ArgumentParser, ArgumentTypeError, Namespace
+from argparse import ArgumentParser, ArgumentTypeError
 from datetime import datetime
+from enum import Enum
 from glob import glob
-from textwrap import dedent
 from typing import Final
 
 LOG_DATE_FMT: Final [str] = "%d/%m/%Y:%H:%M:%S +0000"
@@ -49,28 +49,14 @@ def filter_timestamp_between(log_entries: list[LogEntry], initial_ts: datetime, 
     return [entry for entry in log_entries if (initial_ts <= entry.timestamp <= final_ts)]
 
 
-class FilterArgs:
+class FilterArgs():
+    logs_path: str
     log_level: list[str]
     initial_timestamp: datetime
     final_timestamp: datetime
-    logs_path: str
 
-    def __init__(self, cmd_args: list[str]):
-        try:
-            self.log_level = [ level.upper() for level in cmd_args[0].split(",") ] # map(str.upper, cmd_args[0].split(","))
-            self.initial_timestamp = datetime.strptime(cmd_args[1], DATE_FMT)
-            self.final_timestamp = datetime.strptime(cmd_args[2], DATE_FMT)
-            self.logs_path = cmd_args[3]
-        except (IndexError, ValueError):
-            print(
-                dedent("""
-                    Missing arguments or incorrect format, pass them as follows:
-                        LOG_LEVEL1[,LOG_LEVEL2,...] initial_timestamp final_timestamp logs_path
-
-                        * Date format: YYYY/MM/DD
-                """)
-            )
-            exit(1)
+    def __init__(self):
+        self.log_level = []
 
 
 def filter_parser() -> ArgumentParser:
@@ -85,8 +71,10 @@ def filter_parser() -> ArgumentParser:
     parser.add_argument("logs_path", help="Path where the log files are located")
     parser.add_argument(
         "--level",
+        action="append",
         dest="log_level",
         type=str.upper,
+        choices=LogLevel.get_items(),
         help="Level of the log.",
     )
     parser.add_argument(
@@ -107,9 +95,20 @@ def filter_parser() -> ArgumentParser:
     return parser
 
 
+class LogLevel(Enum):
+    DEBUG: str = "DEBUG"
+    INFO: str = "INFO"
+    WARNING: str = "WARNING"
+    ERROR: str = "ERROR"
+
+    @classmethod
+    def get_items(cls) -> list[str]:
+        return [cls.DEBUG.value, cls.INFO.value, cls.WARNING.value, cls.ERROR.value]
+
+
 if __name__ == "__main__":
     parser: ArgumentParser = filter_parser()
-    filter_args: Namespace = parser.parse_args()
+    filter_args: FilterArgs = parser.parse_args(namespace=FilterArgs())
 
     logs_file_pattern: str = os.path.join(filter_args.logs_path, "*.log")
     log_files: list[str] = glob(logs_file_pattern)
