@@ -2,7 +2,8 @@ import os
 import sys
 from datetime import datetime
 from glob import glob
-from typing import Any, Final
+from textwrap import dedent
+from typing import Final
 
 LOG_DATE_FMT: Final [str] = "%d/%m/%Y:%H:%M:%S +0000"
 DATE_FMT: Final[str] = "%Y/%m/%d"
@@ -48,16 +49,34 @@ def filter_timestamp_between(log_entries: list[LogEntry], initial_ts: datetime, 
     return [entry for entry in log_entries if (initial_ts <= entry.timestamp <= final_ts)]
 
 
-if __name__ == "__main__":
-    cmd_args: list[str] = sys.argv[1:]
-    filter_args: dict[str, Any] = {
-        "log_level": [ level.upper() for level in cmd_args[0].split(",") ], # map(str.upper, cmd_args[0].split(","))
-        "initial_timestamp": datetime.strptime(cmd_args[1], DATE_FMT),
-        "final_timestamp": datetime.strptime(cmd_args[2], DATE_FMT),
-        "logs_path": cmd_args[3],
-    }
+class FilterArgs:
+    log_level: list[str]
+    initial_timestamp: datetime
+    final_timestamp: datetime
+    logs_path: str
 
-    logs_file_pattern: str = os.path.join(filter_args["logs_path"], "*.log")
+    def __init__(self, cmd_args: list[str]):
+        try:
+            self.log_level = [ level.upper() for level in cmd_args[0].split(",") ] # map(str.upper, cmd_args[0].split(","))
+            self.initial_timestamp = datetime.strptime(cmd_args[1], DATE_FMT)
+            self.final_timestamp = datetime.strptime(cmd_args[2], DATE_FMT)
+            self.logs_path = cmd_args[3]
+        except (IndexError, ValueError):
+            print(
+                dedent("""
+                    Missing arguments or incorrect format, pass them as follows:
+                        LOG_LEVEL1[,LOG_LEVEL2,...] initial_timestamp final_timestamp logs_path
+
+                        * Date format: YYYY/MM/DD
+                """)
+            )
+            exit(1)
+
+
+if __name__ == "__main__":
+    filter_args = FilterArgs(sys.argv[1:])
+
+    logs_file_pattern: str = os.path.join(filter_args.logs_path, "*.log")
     log_files: list[str] = glob(logs_file_pattern)
     
     logs: list[LogEntry] = []
@@ -67,8 +86,8 @@ if __name__ == "__main__":
                 [ LogEntry(entry) for entry in f.readlines() ]
             )
 
-    logs = filter_log_level(logs, filter_args["log_level"])
-    logs = filter_timestamp_between(logs, filter_args["initial_timestamp"], filter_args["final_timestamp"])
+    logs = filter_log_level(logs, filter_args.log_level)
+    logs = filter_timestamp_between(logs, filter_args.initial_timestamp, filter_args.final_timestamp)
 
     print("\n".join(map(str, logs)))
     print(len(logs))
