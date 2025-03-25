@@ -1,5 +1,5 @@
 import os
-import sys
+from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from glob import glob
 from textwrap import dedent
@@ -73,8 +73,34 @@ class FilterArgs:
             exit(1)
 
 
+def filter_parser() -> ArgumentParser:
+    parser = ArgumentParser(prog="log_filter")
+
+    parser.add_argument("logs_path", help="Path where the log files are located")
+    parser.add_argument(
+        "--level",
+        dest="log_level",
+        help="Level of the log.",
+    )
+    parser.add_argument(
+        "--initial_timestamp",
+        "-its",
+        dest="initial_timestamp",
+        help="Earlier date when to search logs. YYYY/MM/DD",
+    )
+    parser.add_argument(
+        "--final_timestamp",
+        "-fts",
+        dest="final_timestamp",
+        help="Later date when to search logs. YYYY/MM/DD",
+    )
+
+    return parser
+
+
 if __name__ == "__main__":
-    filter_args = FilterArgs(sys.argv[1:])
+    parser: ArgumentParser = filter_parser()
+    filter_args: Namespace = parser.parse_args()
 
     logs_file_pattern: str = os.path.join(filter_args.logs_path, "*.log")
     log_files: list[str] = glob(logs_file_pattern)
