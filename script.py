@@ -1,5 +1,5 @@
 import os
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, ArgumentTypeError, Namespace
 from datetime import datetime
 from glob import glob
 from textwrap import dedent
@@ -74,24 +74,33 @@ class FilterArgs:
 
 
 def filter_parser() -> ArgumentParser:
+    def cast_date(raw_date: str) -> datetime:
+        try:
+            return datetime.strptime(raw_date, DATE_FMT)
+        except ValueError:
+            raise ArgumentTypeError(f"not a valid date: {raw_date!r}")
+
     parser = ArgumentParser(prog="log_filter")
 
     parser.add_argument("logs_path", help="Path where the log files are located")
     parser.add_argument(
         "--level",
         dest="log_level",
+        type=str.upper,
         help="Level of the log.",
     )
     parser.add_argument(
         "--initial_timestamp",
         "-its",
         dest="initial_timestamp",
+        type=cast_date,
         help="Earlier date when to search logs. YYYY/MM/DD",
     )
     parser.add_argument(
         "--final_timestamp",
         "-fts",
         dest="final_timestamp",
+        type=cast_date,
         help="Later date when to search logs. YYYY/MM/DD",
     )
 
