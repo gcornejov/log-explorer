@@ -1,8 +1,8 @@
 import os
-from collections.abc import Sequence
+import sys
 from datetime import datetime
 from glob import glob
-from typing import Final
+from typing import Any, Final
 
 LOG_DATE_FMT: Final [str] = "%d/%m/%Y:%H:%M:%S +0000"
 DATE_FMT: Final[str] = "%Y/%m/%d"
@@ -32,10 +32,7 @@ class LogEntry:
         return self.raw_entry
 
 
-def filter_log_level(log_entries: list[LogEntry], log_level: str | Sequence[str]) -> list[LogEntry]:
-    if isinstance(log_level, str):
-        log_level: tuple[str] = (log_level, )
-
+def filter_log_level(log_entries: list[LogEntry], log_level: list[str]) -> list[LogEntry]:
     return [entry for entry in log_entries if entry.log_level in log_level]
 
 def filter_timestamp_gt(log_entries: list[LogEntry], timestamp: str | datetime) -> list[LogEntry]:
@@ -62,10 +59,17 @@ def filter_timestamp_between(log_entries: list[LogEntry], initial_ts: str | date
 
 
 if __name__ == "__main__":
+    cmd_args: list[str] = sys.argv[1:]
+    filter_args: dict[str, Any] = {
+        "log_level": cmd_args[0].split(","),
+        "initial_timestamp": cmd_args[1],
+        "final_timestamp": cmd_args[2]
+    }
+
     logs_dir: str = "logs"
     logs_file_pattern: str = os.path.join(logs_dir, "*.log")
-
     log_files: list[str] = glob(logs_file_pattern)
+
     logs: list[LogEntry] = []
     for file in log_files:
         with open(file) as f:
@@ -73,8 +77,8 @@ if __name__ == "__main__":
                 [ LogEntry(entry) for entry in f.readlines() ]
             )
 
-    logs = filter_log_level(logs, ("INFO", "ERROR"))
-    logs = filter_timestamp_between(logs, "2025/03/22", "2025/03/24")
+    logs = filter_log_level(logs, filter_args["log_level"])
+    logs = filter_timestamp_between(logs, filter_args["initial_timestamp"], filter_args["final_timestamp"])
 
     print("\n".join(map(str, logs)))
     print(len(logs))
