@@ -34,6 +34,9 @@ class LogEntry:
 
 
 def filter_log_level(log_entries: list[LogEntry], log_level: list[str]) -> list[LogEntry]:
+    if not log_level:
+        return log_entries
+
     return [entry for entry in log_entries if entry.log_level in log_level]
 
 
@@ -82,6 +85,7 @@ def filter_parser() -> ArgumentParser:
         "-its",
         dest="initial_timestamp",
         type=cast_date,
+        default="0001/01/01",
         help="Earlier date when to search logs. YYYY/MM/DD",
     )
     parser.add_argument(
@@ -89,6 +93,7 @@ def filter_parser() -> ArgumentParser:
         "-fts",
         dest="final_timestamp",
         type=cast_date,
+        default="9999/12/31",
         help="Later date when to search logs. YYYY/MM/DD",
     )
 
