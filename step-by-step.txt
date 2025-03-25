@@ -1,0 +1,43 @@
+1.- Mostrar script, plantear caso clásico
+    Situacion donde se modifica el codigo del script para obtener distintos resultados
+
+2.- Presentar argv y como puede recibir argumentos
+    Recibir argumentos con argv y almacenarlos en un diccionario
+    Comentar el split de log_level, modificacion la funcion filtro y como ahora tenemos un problema cuando los valores estan en minusculas
+
+3.- Añadir logs_path como argumentos
+    Comentar como solucionar el problema de los valores en minuscula para log_level
+    Castear fechas a datetime y comentar la modificacion a la funcion filtro
+
+4.- Mover parseo de argumentos a una clase
+    Extraer la logica a una clase hace mas facil manipular los valores y deja la responsabilidad de la lógica de parseo al contructor
+    Cometar el intento de validacion que se implemento ya que aumento el numero de argumentos que introducir
+
+5.- Implementacion de argparse
+    Comentar como el manejo de argumentos se va complicando a medida que crecen en cantidad.
+    Argparse entrega un "framework" para facilitar el manejo de argumentos con distintas configuraciones.
+    Explicar la instancia de ArgParser
+    Explicar como agregar argumentos
+        - argumentos (por posicion) y opciones (por nombre - largo y corto)
+        - parametro help por argumento
+        - Parametro dest y objeto Namespace
+    Mostrar help automático
+
+6.- Este parser no esta funcionando
+    Fixear argumentos con casteo en tiempo de parseo. Parametro type
+    log_level a str mayúscula y datetime con una validacion por ser mas complejo
+
+7.- Recuperar el parseo de multiples valores para filtrar por log_level
+    Repetir el mismo argumento para agrupar valores en una lista. Parametro Choices
+    Mostrar lista y clase Enum para almacenar los valores
+    Utilizar nuestra clase de argumentos en lugar del objeto Namespace
+
+8.- Adaptar logica para permitir el uso de los argumentos opcionales (options)
+    Añadir valores por defecto a los argumentos de fechas
+    Cambiar funcion filtro por log_level para evaluar lista vacia o None
+
+9.- Expandir manejo de argumento logs_path
+    Agregar validacion de existencia del path y casteo a tipo Path
+    Añadir argumento booleano para indicar que se quiere cargar solo un archivo
+
+10. Reorganizar módulos e instalar proyecto para llamar a la CLI por si sola
